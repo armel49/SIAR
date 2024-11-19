@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Factures</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #facture {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-top: 20px;
+            background-color: white;
+        }
+        .lignes-facture {
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        @media print {
+            button, .form-group {
+                display: none;
+            }
+            #facture {
+                border: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Générateur de Factures</h1>
+    
+    <div class="form-group">
+        <label>Informations de l'entreprise:</label>
+        <input type="text" id="entreprise" placeholder="Nom de votre entreprise">
+        <textarea id="adresseEntreprise" placeholder="Adresse de votre entreprise"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label>Informations du client:</label>
+        <input type="text" id="client" placeholder="Nom du client">
+        <textarea id="adresseClient" placeholder="Adresse du client"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label>Numéro de facture:</label>
+        <input type="text" id="numeroFacture" placeholder="Numéro de facture">
+        <label>Date:</label>
+        <input type="date" id="dateFacture">
+    </div>
+
+    <div class="lignes-facture">
+        <table id="tableFacture">
+            <tr>
+                <th>Description</th>
+                <th>Quantité</th>
+                <th>Prix unitaire</th>
+                <th>Total</th>
+            </tr>
+            <tr>
+                <td><input type="text" placeholder="Description"></td>
+                <td><input type="number" placeholder="Quantité"></td>
+                <td><input type="number" placeholder="Prix"></td>
+                <td></td>
+            </tr>
+        </table>
+        <button onclick="ajouterLigne()">Ajouter une ligne</button>
+    </div>
+
+    <button onclick="genererFacture()">Générer la facture</button>
+    <button onclick="window.print()">Imprimer la facture</button>
+
+    <div id="facture"></div>
+
+    <script>
+        function ajouterLigne() {
+            const table = document.getElementById('tableFacture');
+            const newRow = table.insertRow(-1);
+            newRow.innerHTML = `
+                <td><input type="text" placeholder="Description"></td>
+                <td><input type="number" placeholder="Quantité"></td>
+                <td><input type="number" placeholder="Prix"></td>
+                <td></td>
+            `;
+        }
+
+        function genererFacture() {
+            const entreprise = document.getElementById('entreprise').value;
+            const adresseEntreprise = document.getElementById('adresseEntreprise').value;
+            const client = document.getElementById('client').value;
+            const adresseClient = document.getElementById('adresseClient').value;
+            const numeroFacture = document.getElementById('numeroFacture').value;
+            const dateFacture = document.getElementById('dateFacture').value;
+
+            let total = 0;
+            const lignes = [];
+            const table = document.getElementById('tableFacture');
+            for (let i = 1; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                const description = row.cells[0].querySelector('input').value;
+                const quantite = parseFloat(row.cells[1].querySelector('input').value);
+                const prix = parseFloat(row.cells[2].querySelector('input').value);
+                const sousTotal = quantite * prix;
+                total += sousTotal;
+                lignes.push({ description, quantite, prix, sousTotal });
+            }
+
+            const factureHTML = `
+                <div class="facture-content">
+                    <h2>FACTURE</h2>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <strong>${entreprise}</strong><br>
+                            ${adresseEntreprise.replace(/\n/g, '<br>')}
+                        </div>
+                        <div>
+                            <strong>Facturé à:</strong><br>
+                            ${client}<br>
+                            ${adresseClient.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <strong>Facture N°:</strong> ${numeroFacture}<br>
+                        <strong>Date:</strong> ${dateFacture}
+                    </div>
+                    <table>
+                        <tr>
+                            <th>Description</th>
+                            <th>Quantité</th>
+                            <th>Prix unitaire</th>
+                            <th>Total</th>
+                        </tr>
+                        ${lignes.map(ligne => `
+                            <tr>
+                                <td>${ligne.description}</td>
+                                <td>${ligne.quantite}</td>
+                                <td>${ligne.prix.toFixed(2)} €</td>
+                                <td>${ligne.sousTotal.toFixed(2)} €</td>
+                            </tr>
+                        `).join('')}
+                        <tr>
+                            <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
+                            <td><strong>${total.toFixed(2)} €</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+
+            document.getElementById('facture').innerHTML = factureHTML;
+        }
+    </script>
+</body>
+</html>
